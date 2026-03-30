@@ -1,0 +1,28 @@
+# Everything Becomes F - Build artifacts
+*.o
+*.out
+*.exe
+*.dSYM/
+
+# Executables
+red_magic
+run_all_tests
+
+# macOS
+.DS_Store
+
+# Python (should not exist)
+__pycache__/
+*.py
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Debug
+*.log
