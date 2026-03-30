@@ -2,7 +2,7 @@
  * run_all_tests.c - Test Runner
  * ===============================
  * 
- * Runs all test suites (L1, L2, L3) and reports results.
+ * Runs all test suites (L1, L2, L3, Phase1) and reports results.
  */
 
 #include <stdio.h>
@@ -11,6 +11,7 @@
 extern int run_l1_tests(void);
 extern int run_l2_tests(void);
 extern int run_l3_tests(void);
+extern int run_phase1_tests(void);
 
 int main(void) {
     int total_failures = 0;
@@ -28,6 +29,9 @@ int main(void) {
     
     /* Run L3 System Tests */
     total_failures += run_l3_tests();
+    
+    /* Run Phase 1 Tests */
+    total_failures += run_phase1_tests();
     
     /* Final summary */
     printf("\n============================================\n");
