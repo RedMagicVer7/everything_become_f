@@ -7,6 +7,8 @@
 # Executables
 red_magic
 run_all_tests
+phase1_sandbox_escape
+phase2_ha_cluster
 
 # macOS
 .DS_Store

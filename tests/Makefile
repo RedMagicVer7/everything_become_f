@@ -15,12 +15,13 @@ LIB_SOURCES = $(SRC_DIR)/counter.c \
               $(SRC_DIR)/event_system.c \
               $(SRC_DIR)/red_magic_system.c \
               $(SRC_DIR)/runtime.c \
-              $(SHIKI_SRC_DIR)/phase1_sandbox_escape.c
+              $(SHIKI_SRC_DIR)/phase1_sandbox_escape.c \
+              $(SHIKI_SRC_DIR)/phase2_ha_cluster.c
 
 LIB_OBJECTS = $(LIB_SOURCES:.c=.o)
 
 # Test sources
-TEST_SOURCES = test_l1_unit.c test_l2_integration.c test_l3_system.c test_phase1.c run_all_tests.c
+TEST_SOURCES = test_l1_unit.c test_l2_integration.c test_l3_system.c test_phase1.c test_phase2.c run_all_tests.c
 TEST_OBJECTS = $(TEST_SOURCES:.c=.o)
 
 # Target

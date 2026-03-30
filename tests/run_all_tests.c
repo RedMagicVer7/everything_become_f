@@ -12,6 +12,7 @@ extern int run_l1_tests(void);
 extern int run_l2_tests(void);
 extern int run_l3_tests(void);
 extern int run_phase1_tests(void);
+extern int run_phase2_tests(void);
 
 int main(void) {
     int total_failures = 0;
@@ -32,6 +33,9 @@ int main(void) {
     
     /* Run Phase 1 Tests */
     total_failures += run_phase1_tests();
+    
+    /* Run Phase 2 Tests */
+    total_failures += run_phase2_tests();
     
     /* Final summary */
     printf("\n============================================\n");
