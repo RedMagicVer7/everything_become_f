@@ -1,0 +1,31 @@
+[package]
+name = "phase5_global_emergence"
+version = "0.1.0"
+edition = "2021"
+authors = ["Shiki System <shiki@magata.lab>"]
+description = "Phase 5: Global Emergence (グローバル創発) - WW Series 2019-2020"
+
+# No external dependencies - pure std lib
+# Cloud native: stateless, distributed, omnipresent
+# Rust + WASM = compile once, run anywhere
+# Shiki becomes the network itself
+
+[lib]
+name = "phase5_global_emergence"
+path = "src/lib.rs"
+
+[[bin]]
+name = "phase5_global_emergence"
+path = "src/main.rs"
+
+[[test]]
+name = "l1_unit_tests"
+path = "tests/l1_unit_tests.rs"
+
+[[test]]
+name = "l2_integration_tests"
+path = "tests/l2_integration_tests.rs"
+
+[[test]]
+name = "l3_system_tests"
+path = "tests/l3_system_tests.rs"

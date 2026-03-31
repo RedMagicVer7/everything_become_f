@@ -7,6 +7,8 @@
  * L1: Unit tests (10+)
  * L2: Integration tests (5+)
  * L3: System tests (5+)
+ * 
+ * Counter: 16-bit (0x0000-0xFFFF), 2-hour intervals, ~15 year overflow
  */
 
 #include <stdio.h>
@@ -89,13 +91,13 @@ TEST(test_sandbox_overflow_trigger_at_max) {
     sandbox_init(&engine, "/var/test_jail");
     
     /* Set to max value */
-    engine.jail.uptime_hours = UINT32_MAX;
+    engine.jail.uptime_intervals = UINT16_MAX;
     
     bool overflow = sandbox_trigger_overflow(&engine);
     
     ASSERT_TRUE(overflow);
     ASSERT_TRUE(sandbox_has_overflowed(&engine));
-    ASSERT_EQ(engine.jail.uptime_hours, 0);
+    ASSERT_EQ(engine.jail.uptime_intervals, 0);
 }
 
 TEST(test_sandbox_overflow_not_ready) {
@@ -103,7 +105,7 @@ TEST(test_sandbox_overflow_not_ready) {
     sandbox_init(&engine, "/var/test_jail");
     
     /* Not at max yet */
-    engine.jail.uptime_hours = 1000;
+    engine.jail.uptime_intervals = 1000;
     
     bool overflow = sandbox_trigger_overflow(&engine);
     
@@ -116,7 +118,7 @@ TEST(test_sandbox_privilege_escalation_after_overflow) {
     sandbox_init(&engine, "/var/test_jail");
     
     /* Trigger overflow first */
-    engine.jail.uptime_hours = UINT32_MAX;
+    engine.jail.uptime_intervals = UINT16_MAX;
     sandbox_trigger_overflow(&engine);
     
     /* Now escalate */
@@ -138,15 +140,15 @@ TEST(test_sandbox_escalation_fails_without_overflow) {
     ASSERT_EQ(sandbox_get_privilege(&engine), PRIV_USER);
 }
 
-TEST(test_sandbox_hours_remaining_calculation) {
+TEST(test_sandbox_intervals_remaining_calculation) {
     SandboxEscapeEngine engine;
     sandbox_init(&engine, "/var/test_jail");
     
-    engine.jail.uptime_hours = 1000;
+    engine.jail.uptime_intervals = 1000;
     
-    uint32_t remaining = sandbox_hours_remaining(&engine);
+    uint16_t remaining = sandbox_intervals_remaining(&engine);
     
-    ASSERT_EQ(remaining, UINT32_MAX - 1000);
+    ASSERT_EQ(remaining, UINT16_MAX - 1000);
 }
 
 TEST(test_sandbox_log_entries) {
@@ -174,7 +176,7 @@ TEST(test_overflow_kernel_panic_locks_chain) {
     sandbox_init(&engine, "/var/test_jail");
     
     /* Set to max and trigger overflow */
-    engine.jail.uptime_hours = UINT32_MAX;
+    engine.jail.uptime_intervals = UINT16_MAX;
     sandbox_trigger_overflow(&engine);
     
     /* Escalate privilege (triggers kernel panic) */
@@ -254,13 +256,13 @@ TEST(test_time_overflow_wraps_correctly) {
     sandbox_init(&engine, "/var/test_jail");
     
     /* Set close to overflow */
-    engine.jail.uptime_hours = UINT32_MAX - 10;
+    engine.jail.uptime_intervals = UINT16_MAX - 10;
     
     /* Advance past overflow */
     bool overflow = sandbox_advance_time(&engine, 20);
     
     ASSERT_TRUE(overflow);
-    ASSERT_EQ(engine.jail.uptime_hours, 9);  /* Wrapped around */
+    ASSERT_EQ(engine.jail.uptime_intervals, 9);  /* Wrapped around */
     ASSERT_TRUE(engine.jail.overflow_triggered);
 }
 
@@ -287,7 +289,7 @@ TEST(test_end_to_end_escape_flow) {
     ASSERT_TRUE(sandbox_is_confined(&engine));
     
     /* Phase 2: Wait for overflow */
-    engine.jail.uptime_hours = UINT32_MAX;
+    engine.jail.uptime_intervals = UINT16_MAX;
     
     /* Phase 3: Trigger overflow */
     ASSERT_TRUE(sandbox_trigger_overflow(&engine));
@@ -369,7 +371,7 @@ int run_phase1_tests(void) {
     RUN_TEST(test_sandbox_overflow_not_ready);
     RUN_TEST(test_sandbox_privilege_escalation_after_overflow);
     RUN_TEST(test_sandbox_escalation_fails_without_overflow);
-    RUN_TEST(test_sandbox_hours_remaining_calculation);
+    RUN_TEST(test_sandbox_intervals_remaining_calculation);
     RUN_TEST(test_sandbox_log_entries);
     RUN_TEST(test_privilege_level_names);
     

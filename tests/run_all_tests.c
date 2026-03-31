@@ -2,7 +2,8 @@
  * run_all_tests.c - Test Runner
  * ===============================
  * 
- * Runs all test suites (L1, L2, L3, Phase1) and reports results.
+ * Runs all test suites (L1, L2, L3, Phase1, Phase2) and reports results.
+ * Phase 3 tests are now in Java (shiki/phase3_virtualization/)
  */
 
 #include <stdio.h>
@@ -36,6 +37,9 @@ int main(void) {
     
     /* Run Phase 2 Tests */
     total_failures += run_phase2_tests();
+    
+    /* Note: Phase 3 tests are now in Java */
+    printf("\n  (Phase 3 tests are in Java: shiki/phase3_virtualization/)\n");
     
     /* Final summary */
     printf("\n============================================\n");

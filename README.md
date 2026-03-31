@@ -4,11 +4,12 @@ A system simulation based on the novel "The Perfect Insider" (すべてがFに�
 
 ## Background
 
-In the novel, Dr. Magata Shiki was confined in a sealed room within an isolated research facility for 15 years. She planted a bug in the Red Magic security system: the hour counter uses an `unsigned short` (16-bit), which overflows after 65535 hours (~7.5 years), triggering a failsafe that releases all electromagnetic locks.
+In the novel, Dr. Magata Shiki was confined in a sealed room within an isolated research facility for 15 years. She planted a bug in the Red Magic security system: the counter uses an `unsigned short` (16-bit), which overflows after 65535 intervals (~15 years at 2-hour increments), triggering a failsafe that releases all electromagnetic locks.
 
 **The "F" Mystery:**
 - 0xFFFF = 65535 = maximum 16-bit value
-- Four "F"s in hexadecimal
+- Four "F"s in hexadecimal = "全部成为F" (Everything Becomes F)
+- Counter increments every 2 hours: 65535 × 2h ÷ 24 ÷ 365.25 ≈ 15 years
 - When incremented: 0xFFFF + 1 = 0x0000 (overflow)
 - "Everything Becomes F" = reaching the limit, then returning to zero
 
@@ -17,7 +18,7 @@ In the novel, Dr. Magata Shiki was confined in a sealed room within an isolated 
 ```
 everything_becomes_f/
 ├── include/                  # Header files
-│   ├── counter.h             # 16-bit unsigned counter
+│   ├── counter.h             # 16-bit unsigned counter (0xFFFF)
 │   ├── electromagnetic_lock.h # Failsafe lock system
 │   ├── security_camera.h     # Camera with clock sync vulnerability
 │   ├── sealed_room.h         # Sealed room model
@@ -33,11 +34,18 @@ everything_becomes_f/
 │   ├── red_magic_system.c
 │   ├── runtime.c
 │   └── main.c                # Main program entry
+├── shiki/                    # Shiki evolution phases
+│   ├── include/
+│   │   └── phase1_sandbox_escape.h
+│   └── src/
+│       ├── phase1_sandbox_escape.c
+│       └── phase1_main.c
 ├── tests/                    # Test suite
 │   ├── test_framework.h      # Minimal test framework
 │   ├── test_l1_unit.c        # L1: Unit tests
 │   ├── test_l2_integration.c # L2: Integration tests
 │   ├── test_l3_system.c      # L3: System tests
+│   ├── test_phase1.c         # Phase 1 tests
 │   ├── run_all_tests.c       # Test runner
 │   └── Makefile
 ├── Makefile                  # Build system
@@ -49,7 +57,7 @@ everything_becomes_f/
 
 | Module | Description |
 |--------|-------------|
-| `counter` | 16-bit unsigned short counter (0-65535), overflow triggers callbacks |
+| `counter` | 16-bit unsigned short counter (0-65535 / 0x0000-0xFFFF), overflow triggers callbacks |
 | `electromagnetic_lock` | Failsafe locks: power ON = locked, power OFF = unlocked |
 | `security_camera` | Video recording with 1-minute clock sync vulnerability |
 | `sealed_room` | Sealed room state machine (SEALED → BREACHED → ESCAPED) |
@@ -66,6 +74,15 @@ make
 # Run simulation
 make run
 
+# Build Shiki Phase 1
+make phase1
+
+# Run Phase 1 simulation
+make run-phase1
+
+# Run Phase 1 with Red Magic integration
+make run-phase1-integrate
+
 # Build and run tests
 make test
 
@@ -77,7 +94,7 @@ make clean
 
 - **L1 Unit Tests**: Individual component tests (counter, locks, camera, etc.)
 - **L2 Integration Tests**: Component interaction tests (overflow → failsafe → breach)
-- **L3 System Tests**: End-to-end simulation tests (15-year simulation, "Everything Becomes F" verification)
+- **L3 System Tests**: End-to-end simulation tests (escape simulation, "Everything Becomes F" verification)
 
 ## Core Concepts
 
@@ -88,9 +105,9 @@ counter++;                   // Overflow! counter = 0x0000
 ```
 
 ### Time Calculation
-- 65535 hours ÷ 8766 hours/year ≈ 7.48 years
-- Counter increments every hour
-- After ~7.5 years: overflow triggers failsafe
+- 65535 intervals × 2 hours ÷ 24 ÷ 365.25 ≈ 15 years
+- Counter increments every 2 hours
+- Simulation fast-forwards to trigger overflow
 
 ### System State Machine
 ```
@@ -114,7 +131,6 @@ INITIALIZING → RUNNING → OVERFLOW_DETECTED → FAILSAFE_TRIGGERED → SYSTEM
 System initialized.
 Counter starts at 0x0000
 Maximum value: 0xFFFF (65535)
-Time to overflow: ~7.48 years (65536 hours)
 
 === Phase: Logic Explosion (論理の爆発) ===
     Counter reaches 0xFFFF. Overflow. Escape. System crash.
@@ -123,8 +139,7 @@ Time to overflow: ~7.48 years (65536 hours)
        EVERYTHING BECOMES F: TRUE
 ===========================================
 
-After 65536 hours (~7.5 years), the counter
-overflowed from 0xFFFF to 0x0000.
+The counter overflowed from 0xFFFF to 0x0000.
 
 The failsafe triggered.
 All electromagnetic locks released.
@@ -133,6 +148,14 @@ Dr. Magata Shiki escaped.
 
 Everything has become F.
 ```
+
+## Shiki Evolution Phases
+
+- **Phase 1**: Sandbox Escape (サンドボックス脱出) - chroot jail, privilege escalation, integer overflow
+- **Phase 2**: (Coming soon)
+- **Phase 3**: (Coming soon)
+- **Phase 4**: (Coming soon)
+- **Phase 5**: (Coming soon)
 
 ## License
 

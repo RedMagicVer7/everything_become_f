@@ -116,7 +116,7 @@ bool red_magic_is_down(const RedMagicSystem *system);
 /* Counter access */
 UnsignedShortCounter *red_magic_get_counter(RedMagicSystem *system);
 uint16_t red_magic_get_current_hour(const RedMagicSystem *system);
-uint32_t red_magic_hours_until_overflow(const RedMagicSystem *system);
+uint32_t red_magic_intervals_until_overflow(const RedMagicSystem *system);
 double red_magic_years_until_overflow(const RedMagicSystem *system);
 
 /* Lock system access */

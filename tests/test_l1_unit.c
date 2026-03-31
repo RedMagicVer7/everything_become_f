@@ -4,6 +4,8 @@
  * 
  * Tests individual components in isolation.
  * Each test focuses on a single unit of functionality.
+ * 
+ * Counter: 16-bit (0x0000-0xFFFF), 2-hour intervals, ~15 year overflow
  */
 
 #include <stdio.h>
@@ -58,7 +60,7 @@ TEST(test_counter_increment_by_amount) {
 TEST(test_counter_overflow_detection) {
     UnsignedShortCounter counter;
     counter_init_with_value(&counter, 0xFFFF);
-    ASSERT_EQ(counter.value, 65535);
+    ASSERT_EQ(counter.value, 65535U);
     bool overflow = counter_increment(&counter);
     ASSERT_TRUE(overflow);
     ASSERT_EQ(counter.value, 0);
@@ -76,27 +78,31 @@ TEST(test_counter_overflow_wrapping) {
 
 TEST(test_counter_max_value_constant) {
     ASSERT_EQ(COUNTER_MAX_VALUE, 0xFFFF);
-    ASSERT_EQ(COUNTER_MAX_VALUE, 65535);
+    ASSERT_EQ(COUNTER_MAX_VALUE, 65535U);
 }
 
-TEST(test_counter_hours_until_overflow) {
+TEST(test_counter_intervals_until_overflow) {
     UnsignedShortCounter counter;
     counter_init(&counter);
-    ASSERT_EQ(counter_hours_until_overflow(&counter), 65536);
+    uint32_t intervals = counter_intervals_until_overflow(&counter);
+    /* For 16-bit counter starting at 0, intervals until overflow = 0xFFFF + 1 = 65536 */
+    ASSERT_TRUE(intervals == 65536U);
 }
 
-TEST(test_counter_hours_until_overflow_near_max) {
+TEST(test_counter_intervals_until_overflow_near_max) {
     UnsignedShortCounter counter;
     counter_init_with_value(&counter, 0xFFFE);
-    ASSERT_EQ(counter_hours_until_overflow(&counter), 2);
+    uint32_t intervals = counter_intervals_until_overflow(&counter);
+    /* From 0xFFFE, need 2 increments: one to reach 0xFFFF, one to overflow */
+    ASSERT_TRUE(intervals == 2);
 }
 
 TEST(test_counter_years_until_overflow) {
     UnsignedShortCounter counter;
     counter_init(&counter);
     double years = counter_years_until_overflow(&counter);
-    ASSERT_GT(years, 7.4);
-    ASSERT_LT(years, 7.5);
+    /* ~15 years for 16-bit counter (65536 / 4383) at 2-hour intervals */
+    ASSERT_TRUE(years > 14.0 && years < 16.0);
 }
 
 TEST(test_counter_fast_forward_basic) {
@@ -110,7 +116,7 @@ TEST(test_counter_fast_forward_basic) {
 TEST(test_counter_fast_forward_with_overflow) {
     UnsignedShortCounter counter;
     counter_init(&counter);
-    uint32_t overflows = counter_fast_forward(&counter, 65536);
+    uint32_t overflows = counter_fast_forward(&counter, 65536ULL);
     ASSERT_EQ(overflows, 1);
     ASSERT_EQ(counter.value, 0);
 }
@@ -118,7 +124,7 @@ TEST(test_counter_fast_forward_with_overflow) {
 TEST(test_counter_fast_forward_multiple_overflows) {
     UnsignedShortCounter counter;
     counter_init(&counter);
-    uint32_t overflows = counter_fast_forward(&counter, 131072);
+    uint32_t overflows = counter_fast_forward(&counter, 131072ULL);
     ASSERT_EQ(overflows, 2);
     ASSERT_EQ(counter.value, 0);
 }
@@ -437,8 +443,8 @@ int run_l1_tests(void) {
     RUN_TEST(test_counter_overflow_detection);
     RUN_TEST(test_counter_overflow_wrapping);
     RUN_TEST(test_counter_max_value_constant);
-    RUN_TEST(test_counter_hours_until_overflow);
-    RUN_TEST(test_counter_hours_until_overflow_near_max);
+    RUN_TEST(test_counter_intervals_until_overflow);
+    RUN_TEST(test_counter_intervals_until_overflow_near_max);
     RUN_TEST(test_counter_years_until_overflow);
     RUN_TEST(test_counter_fast_forward_basic);
     RUN_TEST(test_counter_fast_forward_with_overflow);

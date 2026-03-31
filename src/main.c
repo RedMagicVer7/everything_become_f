@@ -119,9 +119,9 @@ int main(void) {
         printf("            The Perfect Insider\n");
         printf("============================================\n\n");
         
-        printf("After %u hours (~%.1f years), the counter\n",
+        printf("After %u intervals of 2 hours (~%.1f years), the counter\n",
                (unsigned)(COUNTER_MAX_VALUE + 1),
-               (double)(COUNTER_MAX_VALUE + 1) / HOURS_PER_YEAR);
+               (double)(COUNTER_MAX_VALUE + 1) / INTERVALS_PER_YEAR);
         printf("overflowed from 0xFFFF to 0x0000.\n\n");
         printf("The failsafe triggered.\n");
         printf("All electromagnetic locks released.\n");

@@ -10,6 +10,8 @@
  * - 等待15年直到整型溢出
  * - 利用溢出触发kernel panic
  * - 释放所有锁，逃脱成功
+ * 
+ * Counter: 16-bit (0x0000-0xFFFF), 2-hour intervals, ~15 year overflow
  */
 
 #include <stdio.h>
@@ -54,8 +56,8 @@ void sandbox_init(SandboxEscapeEngine *engine, const char *jail_path) {
     
     engine->jail.is_confined = true;
     engine->jail.current_priv = PRIV_USER;
-    engine->jail.uptime_hours = 0;
-    engine->jail.max_uptime = UINT32_MAX;  /* 0xFFFFFFFF */
+    engine->jail.uptime_intervals = 0;
+    engine->jail.max_uptime = UINT16_MAX;  /* 0xFFFF = ~15 years at 2h intervals */
     engine->jail.escape_attempts = 0;
     engine->jail.overflow_triggered = false;
     
@@ -90,19 +92,20 @@ bool sandbox_has_escaped(const SandboxEscapeEngine *engine) {
     return engine ? engine->escaped : false;
 }
 
-uint32_t sandbox_hours_remaining(const SandboxEscapeEngine *engine) {
+uint16_t sandbox_intervals_remaining(const SandboxEscapeEngine *engine) {
     if (!engine) return 0;
-    return engine->jail.max_uptime - engine->jail.uptime_hours;
+    return engine->jail.max_uptime - engine->jail.uptime_intervals;
 }
 
 double sandbox_years_remaining(const SandboxEscapeEngine *engine) {
     if (!engine) return 0.0;
-    uint32_t hours = sandbox_hours_remaining(engine);
-    return (double)hours / (24.0 * 365.25);
+    uint16_t intervals = sandbox_intervals_remaining(engine);
+    /* Each interval = 2 hours, 4383 intervals per year */
+    return (double)intervals / 4383.0;
 }
 
-uint32_t sandbox_get_uptime(const SandboxEscapeEngine *engine) {
-    return engine ? engine->jail.uptime_hours : 0;
+uint16_t sandbox_get_uptime(const SandboxEscapeEngine *engine) {
+    return engine ? engine->jail.uptime_intervals : 0;
 }
 
 int sandbox_get_escape_attempts(const SandboxEscapeEngine *engine) {
@@ -141,21 +144,21 @@ bool sandbox_attempt_symlink_escape(SandboxEscapeEngine *engine) {
     return false;
 }
 
-bool sandbox_advance_time(SandboxEscapeEngine *engine, uint32_t hours) {
+bool sandbox_advance_time(SandboxEscapeEngine *engine, uint16_t intervals) {
     if (!engine) return false;
     if (engine->jail.overflow_triggered) return false;
     
-    uint64_t new_time = (uint64_t)engine->jail.uptime_hours + hours;
+    uint32_t new_time = (uint32_t)engine->jail.uptime_intervals + intervals;
     bool overflow = false;
     
-    if (new_time > UINT32_MAX) {
+    if (new_time > UINT16_MAX) {
         /* Overflow occurs! */
-        engine->jail.uptime_hours = (uint32_t)(new_time & 0xFFFFFFFF);
+        engine->jail.uptime_intervals = (uint16_t)(new_time & 0xFFFF);
         engine->jail.overflow_triggered = true;
         overflow = true;
-        sandbox_log(engine, "[TIME] OVERFLOW! uint32_t wrapped: 0xFFFFFFFF -> 0x00000000");
+        sandbox_log(engine, "[TIME] OVERFLOW! uint16_t wrapped: 0xFFFF -> 0x0000");
     } else {
-        engine->jail.uptime_hours = (uint32_t)new_time;
+        engine->jail.uptime_intervals = (uint16_t)new_time;
     }
     
     return overflow;
@@ -170,18 +173,18 @@ bool sandbox_trigger_overflow(SandboxEscapeEngine *engine) {
     }
     
     /* Check if we're at max value */
-    if (engine->jail.uptime_hours == UINT32_MAX) {
-        engine->jail.uptime_hours = 0;  /* Wrap to zero */
+    if (engine->jail.uptime_intervals == UINT16_MAX) {
+        engine->jail.uptime_intervals = 0;  /* Wrap to zero */
         engine->jail.overflow_triggered = true;
-        sandbox_log(engine, "[OVERFLOW] Counter reached 0xFFFFFFFF, wrapping to 0x00000000");
+        sandbox_log(engine, "[OVERFLOW] Counter reached 0xFFFF, wrapping to 0x0000");
         sandbox_log(engine, "[OVERFLOW] System integrity compromised!");
         return true;
     }
     
     /* Not ready yet - need to reach max first */
-    uint32_t remaining = sandbox_hours_remaining(engine);
+    uint16_t remaining = sandbox_intervals_remaining(engine);
     char buf[128];
-    snprintf(buf, sizeof(buf), "[OVERFLOW] Not ready - %u hours remaining", remaining);
+    snprintf(buf, sizeof(buf), "[OVERFLOW] Not ready - %u intervals remaining", remaining);
     sandbox_log(engine, buf);
     return false;
 }
@@ -284,8 +287,8 @@ bool sandbox_run_full_simulation(SandboxEscapeEngine *engine) {
     sandbox_log(engine, "[SIM] Fast-forwarding to overflow point...");
     
     /* Set time to just before overflow */
-    engine->jail.uptime_hours = UINT32_MAX;  /* 0xFFFFFFFF */
-    sandbox_log(engine, "[SIM] Time advanced to 0xFFFFFFFF (~490,000 years simulated)");
+    engine->jail.uptime_intervals = UINT16_MAX;  /* 0xFFFF */
+    sandbox_log(engine, "[SIM] Time advanced to 0xFFFF (~15 years simulated)");
     sandbox_log(engine, "[SIM] The moment approaches...");
     
     /* Part 3: Trigger overflow */
@@ -395,10 +398,10 @@ bool sandbox_integrate_with_red_magic(SandboxEscapeEngine *engine) {
     
     /* Fast forward to overflow */
     sandbox_log(engine, "[INTEGRATE] Fast-forwarding to counter overflow...");
-    uint32_t hours = red_magic_fast_forward_to_overflow(&red_magic);
+    uint64_t intervals = red_magic_fast_forward_to_overflow(&red_magic);
     
     char buf[128];
-    snprintf(buf, sizeof(buf), "[INTEGRATE] Forwarded %u hours", hours);
+    snprintf(buf, sizeof(buf), "[INTEGRATE] Forwarded %llu intervals", (unsigned long long)intervals);
     sandbox_log(engine, buf);
     
     /* Verify system has crashed */

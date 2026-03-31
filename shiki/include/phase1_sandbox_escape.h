@@ -62,8 +62,8 @@ typedef struct {
     char real_root[SANDBOX_PATH_LEN];     /* 真实的系统根 */
     bool is_confined;                      /* 是否被禁锢 */
     PrivilegeLevel current_priv;           /* 当前权限 */
-    uint32_t uptime_hours;                 /* 系统运行时间(小时) */
-    uint32_t max_uptime;                   /* 最大运行时间(0xFFFFFFFF) */
+    uint16_t uptime_intervals;             /* 系统运行时间(2小时为单位) */
+    uint16_t max_uptime;                   /* 最大运行时间(0xFFFF, ~15年) */
     int escape_attempts;                   /* 逃脱尝试次数 */
     bool overflow_triggered;               /* 溢出是否已触发 */
 } ChrootJail;
@@ -121,9 +121,9 @@ bool sandbox_has_overflowed(const SandboxEscapeEngine *engine);
 bool sandbox_has_escaped(const SandboxEscapeEngine *engine);
 
 /**
- * sandbox_hours_remaining - 获取距溢出剩余小时数
+ * sandbox_intervals_remaining - 获取距溢出剩余时间间隔数(2小时为单位)
  */
-uint32_t sandbox_hours_remaining(const SandboxEscapeEngine *engine);
+uint16_t sandbox_intervals_remaining(const SandboxEscapeEngine *engine);
 
 /**
  * sandbox_years_remaining - 获取距溢出剩余年数
@@ -131,9 +131,9 @@ uint32_t sandbox_hours_remaining(const SandboxEscapeEngine *engine);
 double sandbox_years_remaining(const SandboxEscapeEngine *engine);
 
 /**
- * sandbox_get_uptime - 获取当前系统运行时间
+ * sandbox_get_uptime - 获取当前系统运行时间(2小时间隔数)
  */
-uint32_t sandbox_get_uptime(const SandboxEscapeEngine *engine);
+uint16_t sandbox_get_uptime(const SandboxEscapeEngine *engine);
 
 /**
  * sandbox_get_escape_attempts - 获取逃脱尝试次数
@@ -162,18 +162,18 @@ bool sandbox_attempt_symlink_escape(SandboxEscapeEngine *engine);
 
 /**
  * sandbox_advance_time - 推进系统时间
- * @hours: 要推进的小时数
+ * @intervals: 要推进的时间间隔数(每个间隔=2小时)
  * @return: true if overflow occurred
  * 
- * 模拟时间流逝，uint32_t递增
+ * 模拟时间流逝，uint16_t递增
  */
-bool sandbox_advance_time(SandboxEscapeEngine *engine, uint32_t hours);
+bool sandbox_advance_time(SandboxEscapeEngine *engine, uint16_t intervals);
 
 /**
  * sandbox_trigger_overflow - 触发整型溢出
  * @return: true if overflow triggered successfully
  * 
- * 当uptime_hours达到0xFFFF时溢出归零
+ * 当uptime_intervals达到0xFFFF时溢出归零
  */
 bool sandbox_trigger_overflow(SandboxEscapeEngine *engine);
 
