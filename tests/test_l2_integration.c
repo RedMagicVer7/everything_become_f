@@ -64,7 +64,11 @@ TEST(test_fast_forward_to_overflow_unlocks) {
     counter_register_overflow_callback(&counter, overflow_callback_trigger_failsafe, &lock_system);
     
     /* Fast forward past overflow */
+<<<<<<< HEAD
     counter_fast_forward(&counter, 65536);
+=======
+    counter_fast_forward(&counter, 65536ULL);
+>>>>>>> 5f1b377 (fix: revert counter to 16-bit uint16_t (0xFFFF) - 15 year overflow at 2-hour intervals)
     
     ASSERT_TRUE(lock_system_all_unlocked(&lock_system));
 }

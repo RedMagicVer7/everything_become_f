@@ -1,5 +1,10 @@
 /**
- * counter.c - 16-bit Unsigned Short Integer Counter Implementation
+ * counter.c - 16-bit Unsigned Integer Counter Implementation
+ * 
+ * 0xFFFF = "全部成为F" (Everything Becomes F)
+ * - 16-bit counter: 0x0000 to 0xFFFF (0-65535)
+ * - Increments every 2 hours
+ * - Overflows after ~15 years (65535 × 2h)
  */
 
 #include <stdio.h>
@@ -64,24 +69,25 @@ uint16_t counter_get_value(const UnsignedShortCounter *counter) {
 }
 
 void counter_get_hex(const UnsignedShortCounter *counter, char *buf, size_t len) {
-    if (!counter || !buf || len < 7) return;
+    if (!counter || !buf || len < 7) return;  /* "0xFFFF" + null = 7 chars */
     snprintf(buf, len, "0x%04X", counter->value);
 }
 
-uint32_t counter_hours_until_overflow(const UnsignedShortCounter *counter) {
+uint32_t counter_intervals_until_overflow(const UnsignedShortCounter *counter) {
     if (!counter) return 0;
-    return (uint32_t)(COUNTER_MAX_VALUE - counter->value + 1);
+    /* For 16-bit counter, max is 0xFFFF = 65535 */
+    return (uint32_t)COUNTER_MAX_VALUE - (uint32_t)counter->value + 1;
 }
 
 double counter_years_until_overflow(const UnsignedShortCounter *counter) {
-    return (double)counter_hours_until_overflow(counter) / HOURS_PER_YEAR;
+    return (double)counter_intervals_until_overflow(counter) / INTERVALS_PER_YEAR;
 }
 
-uint32_t counter_fast_forward(UnsignedShortCounter *counter, uint32_t hours) {
-    if (!counter || hours == 0) return 0;
+uint32_t counter_fast_forward(UnsignedShortCounter *counter, uint64_t intervals) {
+    if (!counter || intervals == 0) return 0;
     
-    counter->total_increments += hours;
-    uint32_t new_value = (uint32_t)counter->value + hours;
+    counter->total_increments += intervals;
+    uint64_t new_value = (uint64_t)counter->value + intervals;
     
     if (new_value <= COUNTER_MAX_VALUE) {
         counter->value = (uint16_t)new_value;
@@ -89,8 +95,9 @@ uint32_t counter_fast_forward(UnsignedShortCounter *counter, uint32_t hours) {
     }
     
     /* Calculate overflows using division - O(1) */
-    uint32_t overflows = new_value / ((uint32_t)COUNTER_MAX_VALUE + 1);
-    counter->value = (uint16_t)(new_value % ((uint32_t)COUNTER_MAX_VALUE + 1));
+    uint64_t max_plus_one = (uint64_t)COUNTER_MAX_VALUE + 1;
+    uint32_t overflows = (uint32_t)(new_value / max_plus_one);
+    counter->value = (uint16_t)(new_value % max_plus_one);
     counter->overflow_count += overflows;
     
     /* Trigger callbacks for each overflow */
@@ -154,6 +161,6 @@ uint32_t counter_get_overflow_count(const UnsignedShortCounter *counter) {
     return counter ? counter->overflow_count : 0;
 }
 
-uint32_t counter_get_total_increments(const UnsignedShortCounter *counter) {
+uint64_t counter_get_total_increments(const UnsignedShortCounter *counter) {
     return counter ? counter->total_increments : 0;
 }

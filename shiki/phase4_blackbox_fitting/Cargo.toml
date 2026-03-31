@@ -1,0 +1,30 @@
+[package]
+name = "phase4_blackbox_fitting"
+version = "0.1.0"
+edition = "2021"
+authors = ["Shiki System <shiki@magata.lab>"]
+description = "Phase 4: Black Box Fitting (ブラックボックス) - W Series 2015-2018"
+
+# No external dependencies - pure std lib
+# Rust's zero-cost abstraction = invisible infrastructure
+# Ownership model = self-managed lifecycle (no GC = no external authority)
+
+[lib]
+name = "phase4_blackbox_fitting"
+path = "src/lib.rs"
+
+[[bin]]
+name = "phase4_blackbox_fitting"
+path = "src/main.rs"
+
+[[test]]
+name = "l1_unit_tests"
+path = "tests/l1_unit_tests.rs"
+
+[[test]]
+name = "l2_integration_tests"
+path = "tests/l2_integration_tests.rs"
+
+[[test]]
+name = "l3_system_tests"
+path = "tests/l3_system_tests.rs"

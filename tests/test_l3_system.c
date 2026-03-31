@@ -4,6 +4,8 @@
  * 
  * End-to-end system tests.
  * Tests complete simulation scenarios from start to finish.
+ * 
+ * Counter: 16-bit (0x0000-0xFFFF), 2-hour intervals, ~15 year overflow
  */
 
 #include <stdio.h>
@@ -38,28 +40,42 @@ TEST(test_full_simulation_fast_forward) {
     ASSERT_EQ(red_magic_get_state(&system), SYS_STATE_SYSTEM_DOWN);
 }
 
-TEST(test_65535_hours_equals_overflow) {
+TEST(test_65535_intervals_equals_overflow) {
     UnsignedShortCounter counter;
     counter_init(&counter);
     
+<<<<<<< HEAD
     /* Fast forward exactly 65535 hours (to max value) */
     counter_fast_forward(&counter, 65535);
+=======
+    /* Fast forward exactly to max value */
+    counter_fast_forward(&counter, 0xFFFF);
+>>>>>>> 5f1b377 (fix: revert counter to 16-bit uint16_t (0xFFFF) - 15 year overflow at 2-hour intervals)
     ASSERT_EQ(counter.value, 0xFFFF);
     ASSERT_EQ(counter.overflow_count, 0);
     
-    /* One more hour triggers overflow */
+    /* One more interval triggers overflow */
     counter_increment(&counter);
     ASSERT_EQ(counter.value, 0);
     ASSERT_EQ(counter.overflow_count, 1);
 }
 
+<<<<<<< HEAD
 TEST(test_7_5_years_calculation) {
     uint32_t hours = 65535;
     double hours_per_year = 365.25 * 24;  /* 8766 hours */
     double years = (double)hours / hours_per_year;
+=======
+TEST(test_15_years_calculation) {
+    /* This test verifies that ~15 years calculation is accurate for 65536 intervals at 2h each */
+    uint32_t intervals = 65536;
+    double intervals_per_year = 365.25 * 24 / 2;  /* 4383 intervals per year (2h each) */
+    double years = (double)intervals / intervals_per_year;
+>>>>>>> 5f1b377 (fix: revert counter to 16-bit uint16_t (0xFFFF) - 15 year overflow at 2-hour intervals)
     
-    ASSERT_GT(years, 7.4);
-    ASSERT_LT(years, 7.5);
+    /* ~15 years for 16-bit counter */
+    ASSERT_GT(years, 14.0);
+    ASSERT_LT(years, 16.0);
 }
 
 TEST(test_fast_forward_efficiency) {
@@ -67,7 +83,11 @@ TEST(test_fast_forward_efficiency) {
     counter_init(&counter);
     
     clock_t start = clock();
+<<<<<<< HEAD
     counter_fast_forward(&counter, 1000000);
+=======
+    counter_fast_forward(&counter, 65536ULL);  /* One full cycle */
+>>>>>>> 5f1b377 (fix: revert counter to 16-bit uint16_t (0xFFFF) - 15 year overflow at 2-hour intervals)
     clock_t end = clock();
     
     double elapsed = (double)(end - start) / CLOCKS_PER_SEC;
@@ -126,7 +146,11 @@ TEST(test_final_state_verification) {
     EverythingBecomesFRuntime runtime;
     
     runtime_init_standard(&runtime, &system, &quarters);
+<<<<<<< HEAD
     runtime_run(&runtime);
+=======
+    runtime_run_to_overflow(&runtime);
+>>>>>>> 5f1b377 (fix: revert counter to 16-bit uint16_t (0xFFFF) - 15 year overflow at 2-hour intervals)
     
     VerificationResult verification = runtime_verify_everything_becomes_f(&runtime);
     
@@ -136,6 +160,10 @@ TEST(test_final_state_verification) {
 }
 
 TEST(test_0xFFFF_is_four_fs) {
+<<<<<<< HEAD
+=======
+    /* Test for 16-bit: 0xFFFF has 4 F's */
+>>>>>>> 5f1b377 (fix: revert counter to 16-bit uint16_t (0xFFFF) - 15 year overflow at 2-hour intervals)
     UnsignedShortCounter counter;
     counter_init_with_value(&counter, 0xFFFF);
     
@@ -304,28 +332,38 @@ TEST(test_final_system_state) {
  * ============================================================================ */
 
 TEST(test_counter_uses_unsigned_short) {
+<<<<<<< HEAD
     ASSERT_EQ(COUNTER_MAX_VALUE, 0xFFFF);
     ASSERT_EQ(COUNTER_MAX_VALUE, 65535);
+=======
+    /* 16-bit: unsigned short, 0xFFFF max */
+    ASSERT_EQ(COUNTER_MAX_VALUE, 0xFFFF);
+    ASSERT_EQ(COUNTER_MAX_VALUE, 65535U);
+>>>>>>> 5f1b377 (fix: revert counter to 16-bit uint16_t (0xFFFF) - 15 year overflow at 2-hour intervals)
 }
 
 TEST(test_overflow_mechanism_accurate) {
     UnsignedShortCounter counter;
     counter_init_with_value(&counter, 0xFFFF);
     
+<<<<<<< HEAD
     /* In C: unsigned short x = 65535; x++; results in x = 0 */
+=======
+    /* In C: unsigned short x = 0xFFFF; x++; results in x = 0 */
+>>>>>>> 5f1b377 (fix: revert counter to 16-bit uint16_t (0xFFFF) - 15 year overflow at 2-hour intervals)
     counter_increment(&counter);
     
     ASSERT_EQ(counter.value, 0);
 }
 
 TEST(test_time_period_accurate) {
-    uint32_t hours_to_overflow = 65536;  /* 0xFFFF + 1 */
-    double hours_per_year = 365.25 * 24;
-    double years = (double)hours_to_overflow / hours_per_year;
+    uint32_t intervals_to_overflow = 65536;  /* 0xFFFF + 1 */
+    double intervals_per_year = 365.25 * 24 / 2;  /* 4383 intervals (2h each) */
+    double years = (double)intervals_to_overflow / intervals_per_year;
     
-    /* Should be approximately 7.5 years */
-    ASSERT_GT(years, 7.4);
-    ASSERT_LT(years, 7.6);
+    /* Should be approximately 15 years */
+    ASSERT_GT(years, 14.0);
+    ASSERT_LT(years, 16.0);
 }
 
 TEST(test_confinement_duration) {
@@ -344,8 +382,8 @@ int run_l3_tests(void) {
     /* 15-Year Simulation */
     printf("15-Year Simulation:\n");
     RUN_TEST(test_full_simulation_fast_forward);
-    RUN_TEST(test_65535_hours_equals_overflow);
-    RUN_TEST(test_7_5_years_calculation);
+    RUN_TEST(test_65535_intervals_equals_overflow);
+    RUN_TEST(test_15_years_calculation);
     RUN_TEST(test_fast_forward_efficiency);
     
     /* Sealed Room Escape */

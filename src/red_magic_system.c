@@ -124,23 +124,23 @@ bool red_magic_advance_hour(RedMagicSystem *system) {
     return overflow;
 }
 
-uint32_t red_magic_fast_forward(RedMagicSystem *system, uint32_t hours) {
+uint32_t red_magic_fast_forward(RedMagicSystem *system, uint64_t hours) {
     if (!system) return 0;
     if (system->state != SYS_STATE_RUNNING) return 0;
     
     char msg[128];
-    snprintf(msg, sizeof(msg), "Fast forwarding %u hours...", hours);
+    snprintf(msg, sizeof(msg), "Fast forwarding %llu hours...", (unsigned long long)hours);
     red_magic_log(system, system->counter.value, msg, "INFO");
     
     return counter_fast_forward(&system->counter, hours);
 }
 
-uint32_t red_magic_fast_forward_to_overflow(RedMagicSystem *system) {
+uint64_t red_magic_fast_forward_to_overflow(RedMagicSystem *system) {
     if (!system) return 0;
     
-    uint32_t hours_needed = counter_hours_until_overflow(&system->counter);
-    counter_fast_forward(&system->counter, hours_needed);
-    return hours_needed;
+    uint32_t intervals_needed = counter_intervals_until_overflow(&system->counter);
+    counter_fast_forward(&system->counter, intervals_needed);
+    return intervals_needed;
 }
 
 void red_magic_trigger_failsafe(RedMagicSystem *system) {
@@ -202,8 +202,8 @@ uint16_t red_magic_get_current_hour(const RedMagicSystem *system) {
     return system ? system->counter.value : 0;
 }
 
-uint32_t red_magic_hours_until_overflow(const RedMagicSystem *system) {
-    return system ? counter_hours_until_overflow(&system->counter) : 0;
+uint32_t red_magic_intervals_until_overflow(const RedMagicSystem *system) {
+    return system ? counter_intervals_until_overflow(&system->counter) : 0;
 }
 
 double red_magic_years_until_overflow(const RedMagicSystem *system) {
